@@ -1,83 +1,62 @@
-# React Sample Applications for Okta
+<!-- BEGIN_TF_DOCS -->
+# wiz-azure-cloud-events-terraform-module
 
-This repository contains several sample applications that demonstrate various Okta use-cases in your React application.
+A Terraform module to integrate Azure Activity Logs with Wiz.
 
-Each sample makes use of the [Okta React Library][].
+## Requirements
 
-If you haven't done so already, register for a free account at [developer.okta.com](https://developer.okta.com/). Select **Create Free Account** and fill in the forms to complete the registration process. Once you are done and logged in, you will see your Okta Developer Console. 
+| Name | Version |
+|------|---------|
+| terraform | >= 0.13.7 |
+| azurerm | ~> 3.71 |
+| random | >= 2.1 |
 
-> **Tip**: You can also create an account using the [Okta CLI](https://github.com/oktadeveloper/okta-cli) and `okta register`. To create an app, run `okta apps create` and use the settings below.
+## Providers
 
-Register your application by selecting **Applications** > **Add Application**. On the next screen, choose **Single Page App** and click **Next**.
+| Name | Version |
+|------|---------|
+| azurerm | ~> 3.71 |
+| random | >= 2.1 |
 
-On the following screen, edit the application settings. For React applications running in developer mode, the port number should be 8080. Configure your app as follows:
+## Resources
 
-* **Base URI**: `http://localhost:8080`
-* **Login redirect URI**: `http://localhost:8080/login/callback` 
-* **Logout redirect URI**: `http://localhost:8080` 
+| Name | Type |
+|------|------|
+| [azurerm_eventhub.wiz_cloud_events](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/eventhub) | resource |
+| [azurerm_eventhub_authorization_rule.wiz_cloud_events_read](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/eventhub_authorization_rule) | resource |
+| [azurerm_eventhub_namespace.wiz_cloud_events](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/eventhub_namespace) | resource |
+| [azurerm_eventhub_namespace_authorization_rule.wiz_cloud_events_write](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/eventhub_namespace_authorization_rule) | resource |
+| [azurerm_monitor_aad_diagnostic_setting.wiz_cloud_events](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_aad_diagnostic_setting) | resource |
+| [azurerm_monitor_diagnostic_setting.wiz_cloud_events](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_diagnostic_setting) | resource |
+| [azurerm_resource_group.wiz_cloud_events](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/resource_group) | resource |
+| [random_id.uniq](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
+| [azurerm_subscription.primary](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/subscription) | data source |
+| [azurerm_subscriptions.available](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/subscriptions) | data source |
 
-Once you have completed the form, you will be given a **client ID**. You will also need the **issuer** value for your Okta org. 
+## Inputs
 
-The **issuer** is the URL of the authorization server that will perform authentication.  All Developer Accounts have a "default" authorization server.  The issuer is a combination of your Org URL (found in the upper right of the console home page) and `/oauth2/default`. For example, `https://dev-133337.okta.com/oauth2/default`.
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| location | A string representing the Azure region where resources should be provisioned. | `string` | n/a | yes |
+| all\_subscriptions | A boolean representing whether the module should configure all enabled, non-excluded, subscriptions within the selected Azure tenant. (overrides `subscription_ids`) | `bool` | `false` | no |
+| enable\_entra\_id\_logging | A boolean representing whether the module should configure Entra ID log ingestion. | `bool` | `true` | no |
+| eventhub\_message\_retention | A number representing the number of days for which to retain messages on the Azure Event Hub. | `number` | `1` | no |
+| eventhub\_name | A string representing the desired Azure Event Hub name. | `string` | `""` | no |
+| eventhub\_namespace\_maximum\_throughput\_units | A number representing the maximum throughput units for the Azure Event Hub namespace. | `number` | `8` | no |
+| eventhub\_namespace\_name | A string representing the desired Azure Event Hub namespace name. | `string` | `""` | no |
+| eventhub\_partition\_count | A number representing the number of shards for the Azure Event Hub. | `number` | `4` | no |
+| resource\_group\_name | A string representing the Resource Group in which to deploy resources. | `string` | `""` | no |
+| resource\_prefix | The prefix to use at the beginning of every generated resource. | `string` | `"wiz"` | no |
+| subscription\_exclusions | List of subscriptions to exclude when using the `all_subscriptions` option. | `list(string)` | `[]` | no |
+| subscription\_ids | List of subscriptions to enable logging (by default the module will only use the primary subscription) | `list(string)` | `[]` | no |
+| tags | A map of strings representing Key/Value pairs of Tags to apply to created resources. | `map(string)` | `{}` | no |
+| wiz\_datacenter\_ips | A list of strings representing the 'Cloud Scanner' IPs of your Wiz datacenter. | `list(string)` | `[]` | no |
 
-These values must exist as environment variables. They can be exported in the shell, or saved in a file named `testenv`, located in the same directory as this README. See [dotenv](https://www.npmjs.com/package/dotenv) for more details on this file format.
+## Outputs
 
-```ini
-ISSUER=https://yourOktaDomain.com/oauth2/default
-CLIENT_ID=123xxxxx123
-```
-
-Please find the sample that fits your use-case from the table below.
-
-| Sample | Description |
-|--------|-------------|
-| [Okta-Hosted Login](/okta-hosted-login) | A React application that will redirect the user to the Okta-Hosted login page of your Org for authentication.  The user is redirected back to the React application after authenticating. |
-| [Custom Login Page](/custom-login) | A React application that uses the Okta Sign-In Widget within the React application to authenticate the user. |
-
-
-[Okta React Library]: https://github.com/okta/okta-react
-
-**Note:** npm@7 users are advised to specify `--legacy-peer-deps` flag during samples installation.
-
-## Quick Start: Automatic Setup with Heroku
-
-You need a [Heroku](https://signup.heroku.com/) account to follow these instructions.
-
-You can create a free Okta Developer org and deploy this app directly to Heroku by clicking the purple button:
-
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
-
-To deploy the app, you will need an Okta org setup as described in the section above.
-
-You will also need to replace the config values for `ISSUER` and `CLIENT_ID` in Heroku configuration based on your Okta org.
-Also be sure to add your Heroku app's base URL to the list of trusted origins in your Okta admin settings.
-
-After you deploy the app, you will also need to go to your Okta account to [enable cors](https://developer.okta.com/docs/guides/enable-cors/granting-cors/) and configure the `login` and `logout` redirect URI in your client application settings for the newly deployed app domain if they are not preconfigured. 
-
-**Note:** Due to sample apps are served under different routes, base urls will be needed for the redirect uris, e.g.`https://<myapp.heroku.com>/okta-hosted-login` or `https://<myapp.heroku.com>/custom-login`.
-
-Finally, click on **View** on the result screen to navigate to the newly deployed app.
-
-You can use your Okta user credentials to login to the applications. That's it! You've successfully logged in using Okta. 
-
-## Running the resource server
-The samples include a page which accesses a protected resource (messages). To start the sample resource server:
-
-```
-npm run resource-server
-```
-
-## Running the tests
-
-In addition to the other environment vars, you will need credentials for a test user. Add the values for your Okta org and user in a `testenv` file.
-
-```ini
-ISSUER=https://yourOktaDomain.com/oauth2/default
-CLIENT_ID=123xxxxx123
-USERNAME=testuser@email.com
-PASSWORD=testpass
-```
-
-**NOTE**: The test suite expects you to use `8080` for your port number. Make sure your Okta app has the redirect URI if you want to test these samples.
-
-With these variables set, you should be able to run `npm test` and bask in the glory of passing tests.
+| Name | Description |
+|------|-------------|
+| wiz\_cloud\_events\_eventhub\_connection\_string | n/a |
+| wiz\_cloud\_events\_eventhub\_name | n/a |
+| wiz\_cloud\_events\_eventhub\_write\_rule\_id | n/a |
+<!-- END_TF_DOCS -->
